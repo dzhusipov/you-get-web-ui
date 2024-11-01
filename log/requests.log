@@ -13,3 +13,21 @@
 2024-11-01T15:49:28.791086+05:00 - shutting down idle worker
 2024-11-01T15:49:28.791202+05:00 - shutting down idle worker
 2024-11-01T15:49:28.791274+05:00 - accept thread stopped
+2024-11-01T11:02:51.028477841+00:00 - Checking directory: ./downloads
+2024-11-01T11:02:51.032888049+00:00 - Directory permissions: Permissions(FilePermissions { mode: 0o040755 (drwxr-xr-x) })
+2024-11-01T11:02:51.034400299+00:00 - Write test successful
+2024-11-01T11:02:51.034601424+00:00 - Directories checked and ready
+2024-11-01T11:02:51.034653424+00:00 - Loading metadata from: ./downloads/metadata.json
+2024-11-01T11:02:51.035181633+00:00 - Successfully loaded metadata
+2024-11-01T11:02:51.036147841+00:00 - starting 12 workers
+2024-11-01T11:02:51.036240216+00:00 - Actix runtime found; starting in Actix runtime
+2024-11-01T11:02:51.036361799+00:00 - starting service: "actix-web-service-0.0.0.0:8080", workers: 12, listening on: 0.0.0.0:8080
+2024-11-01T11:02:54.640050843+00:00 - error handling /favicon.ico: No such file or directory (os error 2)
+2024-11-01T11:02:56.392044427+00:00 - error handling /sw.js: No such file or directory (os error 2)
+2024-11-01T11:02:59.227955803+00:00 - error handling /sw.js: No such file or directory (os error 2)
+2024-11-01T11:03:05.088106+00:00 - error handling /favicon.ico: No such file or directory (os error 2)
+2024-11-01T11:03:06.656328459+00:00 - error handling /sw.js: No such file or directory (os error 2)
+2024-11-01T11:03:10.191994461+00:00 - error handling /sw.js: No such file or directory (os error 2)
+2024-11-01T11:03:11.378488628+00:00 - error handling /sw.js: No such file or directory (os error 2)
+2024-11-01T11:03:14.869213671+00:00 - error handling /favicon.ico: No such file or directory (os error 2)
+2024-11-01T12:09:53.065217718+00:00 - error handling /sw.js: No such file or directory (os error 2)
