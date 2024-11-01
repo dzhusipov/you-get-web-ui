@@ -236,13 +236,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
-            .service(fs::Files::new("/", "static").index_file("index.html"))
             .service(
                 web::scope("/api")
                     .route("/downloads", web::post().to(start_download))
                     .route("/downloads", web::get().to(get_downloads))
                     .route("/downloads/{id}", web::delete().to(delete_download))
             )
+            .service(fs::Files::new("/", "static").index_file("index.html"))
     })
     .bind("0.0.0.0:8080")?
     .run()
