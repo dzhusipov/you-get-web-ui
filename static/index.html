@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YouTube Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .download-item {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>YouTube Downloader</h1>
+    
+    <div>
+        <input type="text" id="url" placeholder="Enter YouTube URL">
+        <button onclick="startDownload()">Download</button>
+    </div>
+
+    <div id="downloads"></div>
+
+    <script>
+        function startDownload() {
+            const url = document.getElementById('url').value;
+            fetch('/api/downloads', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url }),
+            })
+            .then(response => response.json())
+            .then(() => {
+                document.getElementById('url').value = '';
+                updateDownloads();
+            });
+        }
+
+        function deleteDownload(id) {
+            fetch(`/api/downloads/${id}`, {
+                method: 'DELETE',
+            }).then(() => {
+                updateDownloads();
+            });
+        }
+
+        function updateDownloads() {
+            fetch('/api/downloads')
+                .then(response => response.json())
+                .then(downloads => {
+                    const container = document.getElementById('downloads');
+                    container.innerHTML = '';
+                    
+                    downloads.forEach(download => {
+                        const item = document.createElement('div');
+                        item.className = 'download-item';
+                        
+                        const progressBar = `
+                            <div class="progress-bar">
+                                <div class="progress" style="width: ${download.progress}%"></div>
+                            </div>
+                        `;
+                        
+                        const fileName = download.file_name 
+                            ? `<div>File: ${download.file_name}</div>`
+                            : '';
+                        
+                        item.innerHTML = `
+                            <div>URL: ${download.url}</div>
+                            <div>Status: ${download.status}</div>
+                            ${fileName}
+                            ${progressBar}
+                            <button onclick="deleteDownload('${download.id}')">Delete</button>
+                        `;
+                        
+                        container.appendChild(item);
+                    });
+                });
+        }
+
+        // Update downloads list every 2 seconds
+        setInterval(updateDownloads, 2000);
+        updateDownloads();
+    </script>
+</body>
+</html>
