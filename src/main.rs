@@ -61,7 +61,8 @@ async fn start_download(
         let output_dir = PathBuf::from(DOWNLOADS_DIR);
         std::fs::create_dir_all(&output_dir).unwrap();
 
-        let mut cmd = Command::new("you-get")
+        let mut cmd = Command::new("python3")
+            .arg("/usr/src/you-get/you-get")
             .arg("--output-dir")
             .arg(&output_dir)
             .arg(&url)
