@@ -31,61 +31,30 @@
         <div class="max-w-2xl mx-auto mb-10">
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="flex gap-4">
-                    <input type="text" 
-                           id="url" 
-                           placeholder="Enter video URL" 
-                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                    >
-                    <button onclick="startDownload()" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2">
-                        <i class="fas fa-download"></i>
-                        Download
+                    <input id="url-input" type="text" class="flex-grow p-2 border border-gray-300 rounded" placeholder="Enter video URL">
+                    <button id="download-button" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        <i class="fas fa-download mr-2"></i>Download
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Downloads List -->
-        <div id="downloads" class="max-w-4xl mx-auto space-y-4"></div>
+        <!-- Download Status -->
+        <div id="status" class="max-w-2xl mx-auto mb-10"></div>
+
+        <!-- Download List -->
+        <div id="downloads" class="max-w-2xl mx-auto mb-10"></div>
     </div>
 
     <script>
-        function getStatusIcon(status) {
-            switch(status) {
-                case 'pending':
-                    return '<i class="fas fa-clock text-yellow-500 animate-pulse-custom"></i>';
-                case 'completed':
-                    return '<i class="fas fa-check-circle text-green-500"></i>';
-                case 'failed':
-                    return '<i class="fas fa-exclamation-circle text-red-500"></i>';
-                default:
-                    return '<i class="fas fa-circle-notch fa-spin text-blue-500"></i>';
-            }
-        }
-
-        function getStatusClass(status) {
-            switch(status) {
-                case 'pending':
-                    return 'bg-yellow-50 border-yellow-200';
-                case 'completed':
-                    return 'bg-green-50 border-green-200';
-                case 'failed':
-                    return 'bg-red-50 border-red-200';
-                default:
-                    return 'bg-blue-50 border-blue-200';
-            }
-        }
-
-        function startDownload() {
-            const urlInput = document.getElementById('url');
-            const url = urlInput.value.trim();
-            
+        document.getElementById('download-button').addEventListener('click', async () => {
+            const url = document.getElementById('url-input').value;
             if (!url) {
-                showNotification('Please enter a valid URL', 'error');
+                showNotification('Please enter a video URL', 'error');
                 return;
             }
 
-            const button = urlInput.nextElementSibling;
+            const button = document.getElementById('download-button');
             button.disabled = true;
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
@@ -96,12 +65,11 @@
                 },
                 body: JSON.stringify({ url }),
             })
-
             .then(response => response.json())
-            .then(() => {
-                urlInput.value = '';
+            .then(download => {
+                document.getElementById('url-input').value = '';
                 showNotification('Download started successfully', 'success');
-                updateDownloads();
+                addDownloadToList(download);
             })
             .catch(() => {
                 showNotification('Failed to start download', 'error');
@@ -110,97 +78,45 @@
                 button.disabled = false;
                 button.innerHTML = '<i class="fas fa-download"></i> Download';
             });
-        }
+        });
 
         function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
-                type === 'error' ? 'bg-red-500' : 'bg-green-500'
-            } text-white transform transition-transform duration-300 translate-y-0`;
-            notification.textContent = message;
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.innerText = message;
             document.body.appendChild(notification);
-            
             setTimeout(() => {
-                notification.style.transform = 'translateY(-100%)';
-                setTimeout(() => notification.remove(), 300);
+                notification.remove();
             }, 3000);
         }
 
-        function deleteDownload(id) {
-            fetch(`/api/downloads/${id}`, {
-                method: 'DELETE',
-            })
-            .then(() => {
-                showNotification('Download deleted successfully', 'success');
-                updateDownloads();
-            })
-            .catch(() => {
-                showNotification('Failed to delete download', 'error');
-            });
+        function addDownloadToList(download) {
+            const downloadsDiv = document.getElementById('downloads');
+            const downloadDiv = document.createElement('div');
+            downloadDiv.className = `bg-white rounded-lg shadow-md p-6 mb-4 ${
+                download.status === 'completed' ? 'border-l-4 border-green-500' : 'border-l-4 border-red-500'
+            }`;
+            downloadDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-800 font-bold">${download.url}</p>
+                        <p class="text-gray-600">${download.status}</p>
+                    </div>
+                    ${download.file_name ? `<a href="/downloads/${download.file_name}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download</a>` : ''}
+                </div>
+            `;
+            downloadsDiv.appendChild(downloadDiv);
         }
 
         function updateDownloads() {
             fetch('/api/downloads')
                 .then(response => response.json())
                 .then(downloads => {
-                    const container = document.getElementById('downloads');
-                    container.innerHTML = '';
-                    
-                    if (downloads.length === 0) {
-                        container.innerHTML = `
-                            <div class="text-center py-10 text-gray-500">
-                                <i class="fas fa-inbox text-4xl mb-4"></i>
-                                <p>No downloads yet</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    downloads.forEach(download => {
-                        const statusClass = getStatusClass(download.status);
-                        const statusIcon = getStatusIcon(download.status);
-                        
-                        const item = document.createElement('div');
-                        item.className = `border ${statusClass} rounded-lg p-6 transition-all hover:shadow-md`;
-                        
-                        const progressBarColor = download.status === 'failed' ? 'bg-red-500' : 'bg-blue-500';
-                        const progressBar = `
-                            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-gray-700">
-                                <div class="${progressBarColor} h-2.5 rounded-full transition-all duration-500" 
-                                     style="width: ${download.progress}%">
-                                </div>
-                            </div>
-                        `;
-                        
-                        const fileName = download.file_name 
-                            ? `<div class="flex items-center gap-2 text-gray-600 mb-2">
-                                <i class="fas fa-file"></i>
-                                ${download.file_name}
-                               </div>`
-                            : '';
-                        
-                        item.innerHTML = `
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-2">
-                                    ${statusIcon}
-                                    <span class="font-medium text-gray-700">${download.status}</span>
-                                </div>
-                                <button onclick="deleteDownload('${download.id}')" 
-                                        class="text-red-500 hover:text-red-700 transition-colors">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                            <div class="break-all text-gray-800 mb-4">
-                                <a href="${download.url}" target="_blank" class="hover:text-blue-600 transition-colors">
-                                    ${download.url}
-                                </a>
-                            </div>
-                            ${fileName}
-                            ${progressBar}
-                        `;
-                        
-                        container.appendChild(item);
-                    });
+                    const downloadsDiv = document.getElementById('downloads');
+                    downloadsDiv.innerHTML = '';
+                    downloads.forEach(addDownloadToList);
                 });
         }
 
@@ -209,9 +125,9 @@
         updateDownloads();
 
         // Add keyboard shortcut for downloading
-        document.getElementById('url').addEventListener('keypress', function(e) {
+        document.getElementById('url-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                startDownload();
+                document.getElementById('download-button').click();
             }
         });
     </script>

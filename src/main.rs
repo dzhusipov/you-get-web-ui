@@ -46,14 +46,14 @@ async fn start_download(
         file_name: None,
     };
 
-    // Сохраняем информацию о загрузке
+    // Save download information
     {
         let mut downloads = data.downloads.lock().await;
         downloads.insert(id.clone(), download.clone());
         save_metadata(&downloads).await;
     }
 
-    // Запускаем загрузку в отдельном потоке
+    // Start download in a separate thread
     let downloads = data.downloads.clone();
     let url = download_req.url.clone();
     
@@ -75,9 +75,9 @@ async fn start_download(
         let download = downloads.get_mut(&id).unwrap();
 
         if status.success() {
-            // Находим скачанный файл в директории
+            // Find the downloaded file in the directory
             if let Ok(entries) = std::fs::read_dir(&output_dir) {
-                // Берем самый новый файл в директории
+                // Get the most recently modified file in the directory
                 if let Some(entry) = entries
                     .filter_map(|e| e.ok())
                     .max_by_key(|e| e.metadata().unwrap().modified().unwrap())
@@ -111,7 +111,7 @@ async fn delete_download(
     let mut downloads = data.downloads.lock().await;
     
     if let Some(download) = downloads.remove(id.as_str()) {
-        // Удаляем файл, если он существует
+        // Delete the file if it exists
         if let Some(file_name) = download.file_name {
             let file_path = Path::new(DOWNLOADS_DIR).join(file_name);
             if let Err(e) = std::fs::remove_file(file_path) {
@@ -125,12 +125,11 @@ async fn delete_download(
     }
 }
 
-
-// Функция для проверки и создания необходимых директорий
+// Function to check and create necessary directories
 async fn ensure_directories() -> io::Result<()> {
     debug!("Checking directory: {}", DOWNLOADS_DIR);
     
-    // Проверяем существование директории
+    // Check if the directory exists
     if !Path::new(DOWNLOADS_DIR).exists() {
         debug!("Creating directory: {}", DOWNLOADS_DIR);
         std::fs::create_dir_all(DOWNLOADS_DIR).map_err(|e| {
@@ -139,7 +138,7 @@ async fn ensure_directories() -> io::Result<()> {
         })?;
     }
 
-    // Проверяем права на запись
+    // Check write permissions
     let metadata = std::fs::metadata(DOWNLOADS_DIR).map_err(|e| {
         error!("Failed to get metadata for downloads directory: {}", e);
         e
@@ -165,7 +164,7 @@ async fn ensure_directories() -> io::Result<()> {
 fn load_metadata() -> HashMap<String, Download> {
     debug!("Loading metadata from: {}", METADATA_FILE);
     
-    // Проверяем существование файла метаданных
+    // Check if the metadata file exists
     if !Path::new(METADATA_FILE).exists() {
         debug!("Metadata file doesn't exist, creating new one");
         match std::fs::write(METADATA_FILE, "{}") {
@@ -210,14 +209,13 @@ async fn save_metadata(downloads: &HashMap<String, Download>) {
     }
 }
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // env_logger::init(); 
 
     log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
 
-    // Проверяем директории и права доступа
+    // Check directories and permissions
     match ensure_directories().await {
         Ok(_) => info!("Directories checked and ready"),
         Err(e) => {
@@ -226,8 +224,7 @@ async fn main() -> std::io::Result<()> {
         }
     }
 
-
-    // Загружаем существующие метаданные
+    // Load existing metadata
     let downloads = Arc::new(Mutex::new(load_metadata()));
 
     let app_state = web::Data::new(AppState {
@@ -243,7 +240,9 @@ async fn main() -> std::io::Result<()> {
                     .route("/downloads", web::get().to(get_downloads))
                     .route("/downloads/{id}", web::delete().to(delete_download))
             )
+            .service(fs::Files::new("/downloads", DOWNLOADS_DIR).show_files_listing())
             .service(fs::Files::new("/", "static").index_file("index.html"))
+            
     })
     .bind("0.0.0.0:8080")?
     .run()

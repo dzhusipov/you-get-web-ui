@@ -1,5 +1,5 @@
 # Stage 1: Build the Rust application
-FROM --platform=linux/amd64 rust:alpine3.20 AS builder
+FROM rust:alpine3.20 AS builder
 
 # Install build dependencies
 RUN apk add --no-cache musl-dev
@@ -9,7 +9,7 @@ COPY . .
 RUN cargo build --release
 
 # Stage 2: Create a smaller image with the built application
-FROM --platform=linux/amd64 alpine:3.18 
+FROM alpine:3.18 
 
 # Install necessary dependencies
 RUN apk add --no-cache python3 py3-pip git ffmpeg
