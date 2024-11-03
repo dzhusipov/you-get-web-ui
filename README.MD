@@ -5,13 +5,11 @@ This is a web application built with Rust and Actix Web that allows users to dow
 ## Features
 
 - Download videos from various websites using `you-get`.
-- Track download progress.
 - Manage downloaded files.
 
-## Prerequisites
+## Prerequisites in Docker Container
 
-- Docker
-- Docker Compose (optional)
+- Docker 
 
 ## Getting Started
 
@@ -21,3 +19,10 @@ To build the Docker image, run the following command:
 
 ```sh
 docker build -t you-get-web-ui .
+```
+
+Run the Docker container:
+
+```sh
+docker run -d -p 8080:8080 --name you-get-web-ui you-get-web-ui
+```
